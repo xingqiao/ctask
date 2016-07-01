@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+<meta charset="utf-8">
+<title>基于cTask实现的预加载演示</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" />
+<meta name="format-detection" content="telephone=no" />
+<meta name="qqmusic-set" content="share=1" />
+<link rel="stylesheet" id="id-pagestyle" href="http://imgcache.gtimg.cn/mediastyle/mobile/project_v5/preferences.css?max_age=2592000&v=20160104" />
+
+<!--预加载进度条样式-->
+<style>
+.ct_loading{position:absolute;top:0;left:0;width:100%;height:100%;z-index:400;display:-webkit-box;-webkit-box-orient:vertical;-webkit-box-align:center;-webkit-box-pack:center;height:100%;text-align:center;background:#1b1b1b}
+.ct_loading_logo{position:relative;width:100px;padding-top:10px;margin-bottom:10px}
+.ct_loading_round{position:relative;width:100px;height:100px;border-radius:100px;background-color:#313131;overflow:hidden;background-clip:padding-box}
+.ct_loading_water{position:absolute;width:200%;height:200%;top:0;left:-50%;-webkit-transition:-webkit-transform .3s;}
+.ct_loading_water__cont{width:100%;height:100%;border-radius:80px;background:#f7cf38;-webkit-animation:ct_spin 10s linear infinite}
+.ct_loading_symbol{position:absolute;left:50%;z-index:40;margin-left:-25px;top:0;width:50px;height:102px;background:url(data:image/png;base64,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) no-repeat;background-size:cover}
+.ct_loading_text{font-size:14px;color:#23b45b}
+@-webkit-keyframes ct_spin{
+    from{-webkit-transform:rotate(0)}
+    to{-webkit-transform:rotate(360deg)}
+}
+</style>
+
+</head>
+<body class="c_bg1">
+<div class="wrap" id="wrap" style="width:100%;height:100%">
+    <h1>基于cTask实现的预加载演示</h1>
+    <pre>
+    cTask
+        .timeout(10000) // 超时延迟时间
+        .extra(2) // 额外的外链js数
+        .init([ // 预加载任务列表
+            function(){ // 方法
+                console.log("first task")
+            },
+            "http://imgcache.gtimg.cn/mediastyle/mobile/event/20150615_fatherday_card/img/template_pic_1.jpg", // 图片
+            "http://imgcache.gtimg.cn/mediastyle/mobile/event/20150615_fatherday_card/img/template_pic_2.jpg",
+            "http://imgcache.gtimg.cn/mediastyle/mobile/event/20150615_fatherday_card/img/template_pic_3.jpg",
+            "http://i.gtimg.cn/music/photo_new/T010M000003rFNYM4Guvii.jpg?max_age=2592000",
+            "http://imgcache.gtimg.cn/mediastyle/mobile/event/20151221_personal_inventory/img/profile_bg.jpg?max_age=2592000",
+            { // 图片
+                type: "image",
+                src: "http://imgcache.gtimg.cn/mediastyle/mobile/event/20150615_fatherday_card/img/template_pic_4.jpg"
+            },
+            { // js
+                type: "script",
+                src: "http://imgcache.gtimg.cn/music/h5/client/profile/echarts.js?max_age=604800"
+            },
+            function(){
+                console.log("last task")
+            }
+        ])
+        .then(function(percent){
+            console.log("已加载: " + percent);
+
+            // 更新加载进度条
+            var p = 50 * (1 - percent);
+            progress.style.transform = progress.style["-webkit-transform"] = "translateY(" + p + "%)";
+        })
+        .finish(function(error){
+            // 超时或加载完成
+            console.log("加载完成 " + (error || ""));
+
+            // 隐藏加载进度条
+            setTimeout(function(){
+                loading.style.display = "none";
+            }, 300);
+
+            // 页面初始化
+            initPage();
+        });
+    </pre>
+</div>
+
+<!--预加载进度条DOM结构-->
+<div class="ct_loading">
+    <div class="ct_loading_logo">
+        <div style="position:absolute;top:8px;left:-2px;width:104px;height:104px;z-index:20;display:block;background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANAAAADQBAMAAACEivJHAAAAMFBMVEUbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxuwHakTAAAAD3RSTlMAESIzRFVmd4iZqrvM3e5GKvWZAAAD0klEQVR4Xu3cPWsUURgF4HeyH+7GCJNGC5uANsHCRTAiIi5WgkIWrESJKym00SiCbbYQC5FkidhpktIufpZhUihotYIgSIqtIkkV0JhkM7vR5jLO7O6M83HPKcKeP/Awy52dmXvf95U/pPSgmOlByy8fXD4xKDJ45OTNx4soaPnRefHk6K1FAPR53JSOGCPPNUPfx8UnIy80Qs2HpvjGuFDTBX0qSmDST7RArWem/CfGlXpyyL4vIXLKSgrt3JBQObiQDForSchkZpNAa0UJnfRsfGinJBGSWYgL2coJLVnxoOY9iZhDtTjQ7lOJnNPrMaD3EiNXo0OrQ3GgvilfSMNC8C6IiNCMxMxwNOibxM7tKJBdjA+lrQjQjCTIcHho1UwCGVNhoVZZEiVbDwl9lIS55gPpWwnOeggFvZPEuRgGsgvJoZQVAnorGnImEHIuCHFJ0uWCIJck2pecs/CCoQ+iKZeCoVZJF5SpB0I/RFvuBEIVfVAuCGqY+iBjLgB6IxpzzB9qFXVC6bovtClaM+ELVfVCeT/IHtIL9Vk+0IpozpgPVNEN5dyQ95fD/XYC/OVExrpCVf1QvhvULOiHUrUu0JYAMtkFeo2ADneBSggo0wntCCQLHdAKBhrrgKoYKN8O7RYxUHq9DWoIKHNt0G8UdL0NmkdB/W1QGQVlvZBtoiDD8kBbAsukB/qKg856oCoOynugEg7KuKGmiYOMmgvaFmCmXdAGEhp1QUtIaMAFVZBQzgUVkVD6H9QykZBRd6CGQDPnQJtYaMKBfmGhcw60hIUGHKiKhfIOVMZCWQcqYKGUgtRthLyRFGQLOJaCttHQtII20dCEgjbQ0KiCfqKh4wr6goYOKOgVGtqvoHk01K+gChrKKeguGtqnoDIayiqohIYyCiqgoRQbGkJDfQoy0ZDBhgSeHhQ7e2/V0W7YvfdfR3tM0B58tEc57eWE9rpFe4GkvRLTXvJpny20DzHapyXtY5n2+c/a0KBt0dA2nWjbaLSNQdpWJ23zlrYdzdpgpx0Z0A5BaMc6tIMq2tEb6zCRdjxKO/ClHWHTDuVZZQa0wglaKQituIVWrsMqQKKVVNGKxFhlb7RCPlppIq3YklU+SiuIpZX4soqWaWXYtMJyVqk8rfif1s7AatCgtZywmmhobUG0RidW6xatGY3VXkdrGGS1QNKaOlltqrTGW1YrMa05mtXuzWpgp7Xks4YMsMYm0AZBsEZbsIZ10MaPsAaqsEbEsIbesMb4sAYTsUYtsYZHscZhkQZ88UaW8Yew8cfK8Qfl8Uf/kdKDnPSgv39EeE53VeD9AAAAAElFTkSuQmCC);background-repeat:no-repeat;background-size:cover;"></div>
+        <div class="ct_loading_round">
+            <div class="ct_loading_water ct_loading_progress" style="-webkit-transform:translateY(50%);display:none">
+                <div class="ct_loading_water__cont"></div>
+            </div>
+        </div>
+        <div class="ct_loading_symbol"></div>
+    </div>
+    <div class="ct_loading_text">正在加载中...</div>
+</div>
+
+<!--cTask任务处理-->
+<script>
+;(function(){
+    window.cTask = (function(){
+        var _ = {},
+            _done = [],
+            _then = [],
+            _finish = [],
+            _timer = 0,
+            _timeout = 0,
+            _extraIndex = 0,
+            _extraCount = 0,
+            _exec = function(funcList, data, once){
+                if (_.isFunction(funcList)) {
+                    funcList = [funcList];
+                }
+                if (_.isArray(funcList)) {
+                    funcList.forEach(function(func) {
+                        if (_.isFunction(func)) {
+                            func(data);
+                        }
+                    });
+                    if (once) {
+                        funcList.length = 0;
+                    }
+                }
+            };
+
+        Array.prototype.forEach.call(["Function", "String", "Array", "Object"], function(t, i) {
+            _["is" + t] = function(obj) {
+                return Object.prototype.toString.call(obj) === "[object " + t + "]";
+            };
+        });
+
+        return {
+            progress: 0, // 当前进度
+            count: 0, // 任务总数
+            status: [], // 任务状态，1前置任务都已完成，2当前任务已完成，3当前任务和前置任务都已完成
+
+            /**
+             * 设置超时时间，在init触发前设置才能生效
+             * @param {Number} milliseconds 毫秒数
+             */
+            timeout: function(milliseconds){
+                if (milliseconds > 0) {
+                    _timeout = milliseconds;
+                }
+                return this;
+            },
+
+            /**
+             * 设置额外的任务数，不包括在init(taskList)中，参数值为n时需要手动触发n次 cTask.done() 方法
+             * @param {Number} extraTaskCount 额外的任务数
+             */
+            extra: function(extraTaskCount){
+                _extraCount = extraTaskCount > 0 ? parseInt(extraTaskCount) : 0;
+                return this;
+            },
+
+            /**
+             * 标记某个任务已经完成
+             * @param {Number} taskNo 已经完成的任务序号，不传该参数时则触发extraTaskCount任务
+             */
+            done: function(taskNo){
+                var ct = this,
+                    index = parseInt(taskNo);
+
+                if (index >= 0) { // 触发的是 taskList 中的任务
+                    index += _extraCount;
+                } else if (_extraIndex < _extraCount) { // 触发的是 extraTaskCount 中的任务
+                    index = _extraIndex++;
+                }
+
+                if (index >= 0) {
+                    // 判断是否存在未完成的前置任务
+                    var isPreDone = index > 0 && ct.status[index - 1] != 3 ? 0 : 1;
+
+                    var needUpdateView = (ct.status[index] | 1) !== 3; // 标记是否需要更新展示
+                    ct.status[index] = isPreDone ? 3 : 2;
+
+                    // 执行在then中缓存的回调函数
+                    if (isPreDone) {
+                        _exec(_done[index], null, 1);
+                    }
+
+                    // 如果当前任务还未标记过已完成，就去更新进度条展示
+                    if (needUpdateView) {
+                        ct.progress++;
+                        var percent = ct.count > 0 ? ct.progress / ct.count : 1;
+                        _exec(_then, percent, percent >= 1);
+                    }
+
+                    if ((index >= ct.count - 1) && isPreDone) { // 进度完成时执行_finish
+                        _timer && clearTimeout(_timer);
+                        _timer = null;
+                        setTimeout(function(){
+                            _exec(_finish, null, 1);
+                        }, 0);
+                    } else if (isPreDone) { // 检测是否需要执行下一个任务
+                        // 标记下一个任务的前置任务已经完成
+                        ct.status[index + 1] |= 1;
+
+                        // 如果下一个任务已完成，就传递done命令
+                        if (ct.status[index + 1] & 2) {
+                            ct.done(index + 1 - _extraCount);
+                        }
+                    }
+                }
+
+                return {
+                    // then中指定的操作会在所有前置任务都完成后执行
+                    then: function(func){
+                        if (_.isFunction(func)) {
+                            if (index >= 0 && ct.status[index] != 3) {
+                                if (!_.isArray(_done[index])) {
+                                    _done[index] = [];
+                                }
+                                _done[index].push(func);
+                            } else {
+                                _exec(func);
+                            }
+                        }
+                        return this;
+                    }
+                }
+            },
+
+            /**
+             * 初始化
+             * @param {Array} taskList 要执行的任务数组
+             */
+            init: function(taskList) {
+                var ct = this;
+
+                if (!_.isArray(taskList)) {
+                    taskList = [];
+                }
+
+                ct.status.length = 0;
+                ct.count = _extraCount + taskList.length;
+
+                if (ct.count == 0) {
+                    ct.done();
+                } else {
+                    // 处理任务列表
+                    taskList.forEach(function(item, index){
+                        var isObj = _.isObject(item) && item.src;
+                        if (_.isString(item) || (isObj && item.type == "image")) { // 图片
+                            var elem = new Image();
+                            elem.onload = elem.onerror = elem.onabort = function(){
+                                elem = null;
+                                ct.done(index);
+                            };
+                            elem.src = item.src || item;
+                        } else if (isObj && item.type == "script") { // 外链js
+                            var elem = document.createElement("script");
+                            elem.onload = elem.onerror = elem.onabort = function(){
+                                elem = null;
+                                ct.done(index);
+                            };
+                            elem.src = item.src;
+                            document.body.appendChild(elem);
+                        } else if (_.isFunction(item)) { // 方法
+                            setTimeout(function(){
+                                ct.done(index).then(item);
+                            }, 0);
+                        } else { // 无效任务
+                            ct.done(index);
+                        }
+                    });
+
+                    // 超时处理
+                    if (_timeout > 0) {
+                        _timer = setTimeout(function() {
+                            ct.progress = ct.count;
+                            _exec(_then, 1, 1);
+                            _exec(_finish, "timeout", 1);
+                        }, _timeout);
+                    }
+                }
+
+                return {
+                    // then中指定的操作会在每个任务完成后都触发一次，可以在这里做进度条更新
+                    then: function(func){
+                        if (_.isFunction(func)) {
+                            if (ct.progress >= ct.count) {
+                                _exec(func);
+                            } else {
+                                _then.push(func);
+                            }
+                        }
+                        return this;
+                    },
+                    // finish中指定的操作会在所有任务完成后执行
+                    finish: function(func){
+                        if (_.isFunction(func)) {
+                            if (ct.progress >= ct.count) {
+                                _exec(func);
+                            } else {
+                                _finish.push(func);
+                            }
+                        }
+                        return this;
+                    }
+                }
+            }
+        };
+    })();
+})();
+</script>
+
+<!--基于cTask的预加载演示-->
+<script>
+;(function(){
+    var loading = document.querySelector(".ct_loading"),
+        progress = document.querySelector(".ct_loading_progress");
+    loading.style.display = progress.style.display = "";
+
+    cTask
+        .timeout(10000) // 超时延迟时间
+        .extra(2) // 额外的外链js数
+        .init([ // 预加载任务列表
+            function(){ // 方法
+                console.log("first task")
+            },
+            "http://imgcache.gtimg.cn/mediastyle/mobile/event/20150615_fatherday_card/img/template_pic_1.jpg?r=" + Math.random(), // 图片1
+            "http://imgcache.gtimg.cn/mediastyle/mobile/event/20150615_fatherday_card/img/template_pic_2.jpg?r=" + Math.random(),
+            "http://imgcache.gtimg.cn/mediastyle/mobile/event/20150615_fatherday_card/img/template_pic_3.jpg?r=" + Math.random(),
+            "http://i.gtimg.cn/music/photo_new/T010M000003rFNYM4Guvii.jpg?r=" + Math.random(),
+            "http://imgcache.gtimg.cn/mediastyle/mobile/event/20151221_personal_inventory/img/profile_bg.jpg?r=" + Math.random(),
+            { // 图片2
+                type: "image",
+                src: "http://imgcache.gtimg.cn/mediastyle/mobile/event/20150615_fatherday_card/img/template_pic_4.jpg?r=" + Math.random()
+            },
+            { // js
+                type: "script",
+                src: "http://imgcache.gtimg.cn/music/h5/client/profile/echarts.js?r=" + Math.random()
+            },
+            function(){
+                console.log("last task")
+            }
+        ])
+        .then(function(percent){
+            console.log("已加载: " + percent);
+
+            // 更新加载进度条
+            var p = 50 * (1 - percent);
+            progress.style.transform = progress.style["-webkit-transform"] = "translateY(" + p + "%)";
+        })
+        .finish(function(error){
+            // 超时或加载完成
+            console.log("加载完成 " + (error || ""));
+
+            // 隐藏加载进度条
+            setTimeout(function(){
+                loading.style.display = "none";
+            }, 300);
+
+            // 页面初始化
+            initPage();
+        });
+
+    function initPage(json){
+        console.log("页面初始化");
+    };
+})();
+</script>
+
+
+<script src="http://imgcache.gtimg.cn/music/h5/lib/js/zepto-1.0.min.js?_bid=299&max_age=2592000"></script>
+<script>
+cTask.done().then(function(){
+    console.log("已加载完额外的外链js zepto-1.0.min.js");
+});
+</script>
+<script src="http://imgcache.gtimg.cn/music/h5/lib/js/music-1.0.min.js?_bid=299&max_age=604800"></script>
+<script>
+cTask.done().then(function(){
+    console.log("已加载完额外的外链js music-1.0.min.js");
+});
+</script>
+</body>
+</html>
