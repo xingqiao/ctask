@@ -1,6 +1,7 @@
 # cTask任务处理
 
 支持执行方法、加载图片及外链js
+可以用来实现预加载、并行处理等逻辑
 
 demo: http://y.qq.com/m/demo/ctools/ctask.html
 
