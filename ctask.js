@@ -1,10 +1,58 @@
 // cTask任务处理
+    // 调用示例
+    // cTask
+    //     .timeout(10000)
+    //     .extra(0)
+    //     .init([
+    //         function(){
+    //             console.log("first task")
+    //         },
+    //         "http://imgcache.gtimg.cn/mediastyle/mobile/event/20150615_fatherday_card/img/template_pic_1.jpg",
+    //         "http://imgcache.gtimg.cn/mediastyle/mobile/event/20150615_fatherday_card/img/template_pic_2.jpg",
+    //         "http://imgcache.gtimg.cn/mediastyle/mobile/event/20150615_fatherday_card/img/template_pic_3.jpg",
+    //         {
+    //             type: "image",
+    //             src: "http://imgcache.gtimg.cn/mediastyle/mobile/event/20150615_fatherday_card/img/template_pic_4.jpg"
+    //         },
+    //         {
+    //             type: "script",
+    //             src: "http://imgcache.gtimg.cn/music/h5/lib/js/zepto-1.0.min.js?_bid=299&max_age=2592000"
+    //         },
+    //         {
+    //             type: "script",
+    //             src: "http://imgcache.gtimg.cn/music/h5/lib/js/music-1.0.min.js?_bid=299&max_age=2592000&ver=20160516"
+    //         },
+    //         function(){
+    //             console.log("last task")
+    //         }
+    //     ])
+    //     .then(function(percent){
+    //         console.log("then " + percent);
+    //         var p = 50 * (1 - percent);
+    //         progress.style.transform = progress.style["-webkit-transform"] = "translateY(" + p + "%)";
+    //     })
+    //     .catch(function(taskNo){ // script任务执行失败时会触发
+    //         console.log("任务 " + taskNo + " 执行失败");
+    //         var txt = document.querySelector(".ct_loading_text");
+    //         txt.innerHTML = "加载失败，点击重试";
+    //         txt.onclick = function(){location.reload()};
+    //     })
+    //     .finish(function(error){
+    //         console.log("finish " + error);
+    //         setTimeout(function(){
+    //             loading.style.display = "none";
+    //         }, 300);
+    //         Page.initEvent();
+    //     });
+    // cTask.done().then(function(){})
 ;(function(){
     window.cTask = (function(){
         var _ = {},
             _done = [],
             _then = [],
             _finish = [],
+            _error = [],
+            _isError = 0,
             _timer = 0,
             _timeout = 0,
             _extraIndex = 0,
@@ -37,11 +85,11 @@
             status: [], // 任务状态，1前置任务都已完成，2当前任务已完成，3当前任务和前置任务都已完成
 
             /**
-             * 设置超时时间，在init触发前设置才能生效
+             * 设置超时时间，在init触发前设置才能生效，init触发后将其设置为0可以取消超时设置
              * @param {Number} milliseconds 毫秒数
              */
             timeout: function(milliseconds){
-                if (milliseconds > 0) {
+                if (milliseconds >= 0) {
                     _timeout = milliseconds;
                 }
                 return this;
@@ -54,6 +102,13 @@
             extra: function(extraTaskCount){
                 _extraCount = extraTaskCount > 0 ? parseInt(extraTaskCount) : 0;
                 return this;
+            },
+
+            /**
+             * 手动触发error事件绑定的方法，一般用于extraTaskCount任务失败时调用
+             */
+            error: function(params) {
+                _exec(_error, params);
             },
 
             /**
@@ -141,6 +196,12 @@
                 if (ct.count == 0) {
                     ct.done();
                 } else {
+                    // 错误处理
+                    _error = [function() {
+                        _isError = 1;
+                        _timeout = 0;
+                    }];
+
                     // 处理任务列表
                     taskList.forEach(function(item, index){
                         var isObj = _.isObject(item) && item.src;
@@ -151,11 +212,15 @@
                                 ct.done(index);
                             };
                             elem.src = isObj ? item.src : item;
-                        } else if (isObj && item.type == "script") { // 外链js
+                        } else if (isObj && item.type == "script") { // 外链js，加载失败时会触发error
                             var elem = document.createElement("script");
-                            elem.onload = elem.onerror = elem.onabort = function(){
+                            elem.onload = elem.onerror = elem.onabort = function(e){
                                 elem = null;
-                                ct.done(index);
+                                if (e.type === "load") {
+                                    ct.done(index);
+                                } else {
+                                    ct.error(index);
+                                }
                             };
                             elem.src = item.src;
                             document.body.appendChild(elem);
@@ -171,15 +236,20 @@
                     // 超时处理
                     if (_timeout > 0) {
                         _timer = setTimeout(function() {
-                            ct.progress = ct.count;
-                            _exec(_then, 1, 1);
-                            _exec(_finish, "timeout", 1);
+                            if (_timeout > 0) {
+                                ct.progress = ct.count;
+                                _exec(_then, 1, 1);
+                                _exec(_finish, "timeout", 1);
+                            }
                         }, _timeout);
                     }
                 }
 
                 return {
-                    // then中指定的操作会在每个任务完成后都触发一次，可以在这里做进度条更新
+                    /**
+                     * then中指定的操作会在每个任务完成后都触发一次，可以在这里做进度条更新
+                     * @param {} func
+                     */
                     then: function(func){
                         if (_.isFunction(func)) {
                             if (ct.progress >= ct.count) {
@@ -190,7 +260,10 @@
                         }
                         return this;
                     },
-                    // finish中指定的操作会在所有任务完成后执行
+                    /**
+                     * finish中指定的操作会在所有任务完成后执行
+                     * @param {} func
+                     */
                     finish: function(func){
                         if (_.isFunction(func)) {
                             if (ct.progress >= ct.count) {
@@ -200,51 +273,23 @@
                             }
                         }
                         return this;
+                    },
+                    /**
+                     * catch中指定的操作会在error事件中执行
+                     * @param {} func
+                     */
+                    catch: function(func){
+                        if (_.isFunction(func)) {
+                            if (ct.progress >= ct.count) {
+                                _exec(func);
+                            } else {
+                                _error.push(func);
+                            }
+                        }
+                        return this;
                     }
                 }
             }
         };
     })();
 })();
-
-// 调用示例
-// cTask
-//     .timeout(10000)
-//     .extra(0)
-//     .init([
-//         function(){
-//             console.log("first task")
-//         },
-//         "http://imgcache.gtimg.cn/mediastyle/mobile/event/20150615_fatherday_card/img/template_pic_1.jpg",
-//         "http://imgcache.gtimg.cn/mediastyle/mobile/event/20150615_fatherday_card/img/template_pic_2.jpg",
-//         "http://imgcache.gtimg.cn/mediastyle/mobile/event/20150615_fatherday_card/img/template_pic_3.jpg",
-//         {
-//             type: "image",
-//             src: "http://imgcache.gtimg.cn/mediastyle/mobile/event/20150615_fatherday_card/img/template_pic_4.jpg"
-//         },
-//         {
-//             type: "script",
-//             src: "http://imgcache.gtimg.cn/music/h5/lib/js/zepto-1.0.min.js?_bid=299&max_age=2592000"
-//         },
-//         {
-//             type: "script",
-//             src: "http://imgcache.gtimg.cn/music/h5/lib/js/music-1.0.min.js?_bid=299&max_age=2592000&ver=20160516"
-//         },
-//         function(){
-//             console.log("last task")
-//         }
-//     ])
-//     .then(function(percent){
-//         console.log("then " + percent);
-//         var p = 50 * (1 - percent);
-//         progress.style.transform = progress.style["-webkit-transform"] = "translateY(" + p + "%)";
-//     })
-//     .finish(function(error){
-//         console.log("finish " + error);
-//         setTimeout(function(){
-//             loading.style.display = "none";
-//         }, 300);
-//         Page.initEvent();
-//     });
-//
-// cTask.done().then(function(){})

@@ -338,6 +338,11 @@
             var p = 50 * (1 - percent);
             progress.style.transform = progress.style["-webkit-transform"] = "translateY(" + p + "%)";
         })
+        .catch(function(){
+            var txt = document.querySelector(".ct_loading_text");
+            txt.innerHTML = "加载失败，点击重试";
+            txt.onclick = function(){location.reload()};
+        })
         .finish(function(error){
             // 超时或加载完成
             console.log("加载完成 " + (error || ""));
@@ -358,17 +363,7 @@
 </script>
 
 
-<script src="http://imgcache.gtimg.cn/music/h5/lib/js/zepto-1.0.min.js?_bid=299&max_age=2592000"></script>
-<script>
-cTask.done().then(function(){
-    console.log("已加载完额外的外链js zepto-1.0.min.js");
-});
-</script>
-<script src="http://imgcache.gtimg.cn/music/h5/lib/js/music-1.0.min.js?_bid=299&max_age=604800"></script>
-<script>
-cTask.done().then(function(){
-    console.log("已加载完额外的外链js music-1.0.min.js");
-});
-</script>
+<script src="http://imgcache.gtimg.cn/music/h5/lib/js/zepto-1.0.min.js?_bid=299&max_age=2592000" onload="cTask.done().then(function(){console.log('已加载完额外的外链js zepto-1.0.min.js')})" onerror="cTask.error()"></script>
+<script src="http://imgcache.gtimg.cn/music/h5/lib/js/music-1.0.min.js?_bid=299&max_age=604800" onload="cTask.done().then(function(){console.log('已加载完额外的外链js music-1.0.min.js')})" onerror="cTask.error()"></script>
 </body>
 </html>
