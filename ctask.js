@@ -16,11 +16,7 @@
     //         },
     //         {
     //             type: "script",
-    //             src: "http://imgcache.gtimg.cn/music/h5/lib/js/zepto-1.0.min.js?_bid=299&max_age=2592000"
-    //         },
-    //         {
-    //             type: "script",
-    //             src: "http://imgcache.gtimg.cn/music/h5/lib/js/music-1.0.min.js?_bid=299&max_age=2592000&ver=20160516"
+    //             src: "http://apps.bdimg.com/libs/jquery/2.1.4/jquery.js"
     //         },
     //         function(){
     //             console.log("last task")
